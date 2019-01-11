@@ -42,14 +42,14 @@
     </dependentAssembly>
   </dependency>
   <dependency>
-    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="ImageSlicer.exe" size="870400">
+    <dependentAssembly dependencyType="install" allowDelayedBinding="true" codebase="ImageSlicer.exe" size="871392">
       <assemblyIdentity name="ImageSlicer" version="1.0.0.0" language="neutral" processorArchitecture="msil" />
       <hash>
         <dsig:Transforms>
           <dsig:Transform Algorithm="urn:schemas-microsoft-com:HashTransforms.Identity" />
         </dsig:Transforms>
         <dsig:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha256" />
-        <dsig:DigestValue>rYGHNIXEl08O9chRbnEFsK6roKPbthUMwh1oSjuuXKQ=</dsig:DigestValue>
+        <dsig:DigestValue>yq9kzEJdGBQ587rJ9tTJ+T+S/tXgv+NPnqdgC087M9Y=</dsig:DigestValue>
       </hash>
     </dependentAssembly>
   </dependency>
