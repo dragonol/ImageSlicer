@@ -22,14 +22,30 @@ namespace ImageSlicer
         {
             public int Status { get; set; }
             public int LabelNum { get; set; }
-            public (int lowX, int highX, int lowY, int highY) Value { get; set; }
-            public Label(int num ,int status, (int lowX, int highX, int lowY, int highY) value)
+            public Pic Value { get; set; }
+            public Label(int num ,int status, Pic value)
             {
                 LabelNum = num;
                 Status = status;
                 Value = value;
             }
         }
+
+        class Pic
+        {
+            public int lowX { get; set; }
+            public int highX { get; set; }
+            public int lowY { get; set; }
+            public int highY { get; set; }
+            public Pic(int lX,int hX,int lY,int hY)
+            {
+                lowX = lX;
+                highX = hX;
+                lowY = lY;
+                highY = hY;
+            }
+        }
+
         public MainWindow()
         {
             InitializeComponent();
@@ -57,9 +73,9 @@ namespace ImageSlicer
             Label[] last = new Label[bitmap.Width];
 
             //merge a label with a value
-            Label Merge(Label label, (int lowX, int highX, int lowY, int highY) value)
+            Label Merge(Label label, Pic value)
             {
-                label.Value = 
+                label.Value = new Pic
                     (Math.Min(label.Value.lowX, value.lowX),
                     Math.Max(label.Value.highX, value.highX),
                     Math.Min(label.Value.lowY, value.lowY),
@@ -104,7 +120,7 @@ namespace ImageSlicer
                     if (bitmap.GetPixel(0, 0).A != 0) //check first pixel of row
                     {
                         lookUp.Add(new HashSet<int>());
-                        results.Add(new Label(results.Count, 1, (0, 0, 0, 0)));
+                        results.Add(new Label(results.Count, 1, new Pic(0, 0, 0, 0)));
                         last[0] = results.Last();
                     }
 
@@ -113,11 +129,11 @@ namespace ImageSlicer
                         if (bitmap.GetPixel(j, 0).A == 0 && bitmap.GetPixel(j + 1, 0).A != 0)
                         {
                             lookUp.Add(new HashSet<int>());
-                            results.Add(new Label(results.Count, 1, (j + 1, j + 1, 0, 0)));
+                            results.Add(new Label(results.Count, 1, new Pic(j + 1, j + 1, 0, 0)));
                             last[j + 1] = results.Last();
                         }
                         else if (bitmap.GetPixel(j, 0).A != 0 && bitmap.GetPixel(j + 1, 0).A != 0)
-                            last[j + 1] = Merge(last[j], (j + 1, j + 1, 0, 0));
+                            last[j + 1] = Merge(last[j], new Pic(j + 1, j + 1, 0, 0));
                     }
 
                     // -- Check rows in middle
@@ -127,13 +143,13 @@ namespace ImageSlicer
                         if (bitmap.GetPixel(0, i).A != 0) //check first pixel of row
                         {
                             if (bitmap.GetPixel(0, i - 1).A != 0) //check pixel above
-                                current[0] = Merge(last[0], (0, 0, i, i));
+                                current[0] = Merge(last[0], new Pic(0, 0, i, i));
                             else if (bitmap.GetPixel(1, i - 1).A != 0) //check pixel above on right
-                                current[0] = Merge(last[1], (0, 0, i, i));
+                                current[0] = Merge(last[1], new Pic(0, 0, i, i));
                             else // if arent any pixel above
                             {
                                 lookUp.Add(new HashSet<int>());
-                                results.Add(new Label(results.Count, 1, (0, 0, i, i)));
+                                results.Add(new Label(results.Count, 1, new Pic(0, 0, i, i)));
                                 current[0] = results.Last();
                             }
                         }
@@ -143,26 +159,26 @@ namespace ImageSlicer
                             if (bitmap.GetPixel(j, i).A == 0 && bitmap.GetPixel(j + 1, i).A != 0) 
                             {
                                 if (bitmap.GetPixel(j + 1, i - 1).A != 0) //check pixel above
-                                    current[j + 1] = Merge(last[j + 1], (j + 1, j + 1, i, i));
+                                    current[j + 1] = Merge(last[j + 1], new Pic(j + 1, j + 1, i, i));
                                 else
                                 {
                                     bool check = true;
                                     if (bitmap.GetPixel(j, i - 1).A != 0) //check pixel above on left
                                     {
-                                        current[j + 1] = Merge(last[j], (j + 1, j + 1, i, i));
+                                        current[j + 1] = Merge(last[j], new Pic(j + 1, j + 1, i, i));
                                         check = false;
                                         if (bitmap.GetPixel(j + 2, i - 1).A != 0) //check pixel above on right
                                             current[j + 1] = Merge2Label(current[j + 1], last[j + 2]);
                                     }
                                     else if (bitmap.GetPixel(j + 2, i - 1).A != 0) //check pixel above on right
                                     {
-                                        current[j + 1] = Merge(last[j + 2], (j + 1, j + 1, i, i));
+                                        current[j + 1] = Merge(last[j + 2], new Pic(j + 1, j + 1, i, i));
                                         check = false;
                                     }
                                     if (check) // if arent any pixel above
                                     {
                                         lookUp.Add(new HashSet<int>());
-                                        results.Add(new Label(results.Count, 1, (j + 1, j + 1, i, i)));
+                                        results.Add(new Label(results.Count, 1, new Pic(j + 1, j + 1, i, i)));
                                         current[j + 1] = results.Last();
                                     }
                                 }
@@ -171,22 +187,22 @@ namespace ImageSlicer
                             else if (bitmap.GetPixel(j, i).A != 0 && bitmap.GetPixel(j + 1, i).A != 0)
                             {
                                 if (bitmap.GetPixel(j + 1, i - 1).A != 0) //check pixel above
-                                    current[j + 1] = Merge2Label(Merge(current[j], (j + 1, j + 1, i, i)), last[j + 1]);
+                                    current[j + 1] = Merge2Label(Merge(current[j], new Pic(j + 1, j + 1, i, i)), last[j + 1]);
                                 else
                                 {
                                     bool check = true;
                                     if (bitmap.GetPixel(j + 2, i - 1).A != 0) //check pixel above on right
                                     {
-                                        current[j + 1] = Merge2Label(Merge(current[j], (j + 1, j + 1, i, i)), last[j + 2]);
+                                        current[j + 1] = Merge2Label(Merge(current[j], new Pic(j + 1, j + 1, i, i)), last[j + 2]);
                                         check = false;
                                     }
                                     if (bitmap.GetPixel(j, i - 1).A != 0) //check pixel above on left
                                     {
-                                        current[j + 1] = Merge2Label(Merge(last[j], (j + 1, j + 1, i, i)), current[j]);
+                                        current[j + 1] = Merge2Label(Merge(last[j], new Pic(j + 1, j + 1, i, i)), current[j]);
                                         check = false;
                                     }
                                     if (check) // check if arent any pixel above
-                                        current[j + 1] = Merge(current[j], (j + 1, j + 1, i, i));
+                                        current[j + 1] = Merge(current[j], new Pic(j + 1, j + 1, i, i));
                                 }
                             }
                         }
@@ -195,24 +211,24 @@ namespace ImageSlicer
                         if (bitmap.GetPixel(lastRow, i).A == 0 && bitmap.GetPixel(lastRow + 1, i).A != 0)
                         {
                             if (bitmap.GetPixel(lastRow + 1, i - 1).A != 0)
-                                current[lastRow + 1] = Merge(last[lastRow + 1], (lastRow + 1, lastRow + 1, i, i));
+                                current[lastRow + 1] = Merge(last[lastRow + 1], new Pic(lastRow + 1, lastRow + 1, i, i));
                             else if (bitmap.GetPixel(lastRow, i - 1).A != 0)
-                                current[lastRow + 1] = Merge(last[lastRow], (lastRow + 1, lastRow + 1, i, i));
+                                current[lastRow + 1] = Merge(last[lastRow], new Pic(lastRow + 1, lastRow + 1, i, i));
                             else
                             {
                                 lookUp.Add(new HashSet<int>());
-                                results.Add(new Label(results.Count, 1, (lastRow + 1, lastRow + 1, i, i)));
+                                results.Add(new Label(results.Count, 1, new Pic(lastRow + 1, lastRow + 1, i, i)));
                                 current[lastRow + 1] = results.Last();
                             }
                         }
                         else if (bitmap.GetPixel(lastRow, i).A != 0 && bitmap.GetPixel(lastRow + 1, i).A != 0)
                         {
                             if (bitmap.GetPixel(lastRow + 1, i - 1).A != 0)
-                                current[lastRow + 1] = Merge2Label(Merge(current[lastRow], (lastRow + 1, lastRow + 1, i, i)), last[lastRow + 1]);
+                                current[lastRow + 1] = Merge2Label(Merge(current[lastRow], new Pic(lastRow + 1, lastRow + 1, i, i)), last[lastRow + 1]);
                             else if (bitmap.GetPixel(lastRow, i - 1).A != 0)
-                                current[lastRow + 1] = Merge2Label(Merge(current[lastRow], (lastRow + 1, lastRow + 1, i, i)), last[lastRow]);
+                                current[lastRow + 1] = Merge2Label(Merge(current[lastRow], new Pic(lastRow + 1, lastRow + 1, i, i)), last[lastRow]);
                             else
-                                current[lastRow + 1] = Merge(current[lastRow], (lastRow + 1, lastRow + 1, i, i));
+                                current[lastRow + 1] = Merge(current[lastRow], new Pic(lastRow + 1, lastRow + 1, i, i));
                         }
 
                         //assign current to last and clear current
